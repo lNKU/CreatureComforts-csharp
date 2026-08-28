@@ -121,6 +121,7 @@ public class EditDatabaseValues(
         globals.SavagePlayCooldown = Random.Shared.Next(_config.ScavCooldownMinSeconds, _config.ScavCooldownMaxSeconds);
         ragfair.MinUserLevel = _config.FleaMarketMinLevel;
 
+        // Scale experience required for new levels
         for (int i = 0; i < globalsXP.Length; i++)
         {
             var expLvl = globalsXP[i];
@@ -129,18 +130,20 @@ public class EditDatabaseValues(
 
             double multiplier = level switch
             {
-                <= 10 => 1.45,
-                <= 70 => 1.55,
-                71 => 1.35,
+                <= 10 => 1.45, // if below level 10, increase exp per level by 45%
+                <= 70 => 1.55, // if between levels 10 and 70, increase exp per level by 55%
+                71 => 1.35, // if over level 70, increase exp per level by 35%
                 _ => 1.25
             };
 
             expLvl.Experience = (int)Math.Ceiling(reqExp * multiplier);
         }
 
+        // Halve Energy and Hydration drain
         globals.Health.Effects.Existence.HydrationDamage /= 2f;
         globals.Health.Effects.Existence.EnergyDamage /= 2f;
-
+        
+        // Increase weight limits slightly
         globalsStamina.BaseOverweightLimits = globalsStamina.BaseOverweightLimits with
         {
             X = globalsStamina.BaseOverweightLimits.X * 1.55f,
@@ -176,6 +179,7 @@ public class EditDatabaseValues(
 
         foreach (var item in items.Values)
         {
+            // Remove folding blocks for weapons
             if (item.Properties == null) continue;
 
             if (item.Properties.BlocksFolding == true)
@@ -183,12 +187,14 @@ public class EditDatabaseValues(
                 item.Properties.BlocksFolding = false;
             }
 
+            // Remove durability burn for suppressors & ammo
             if (item.Parent == SilencerParentId || item.Parent == AmmoParentId)
             {
                 item.Properties.DurabilityBurnModificator = 1f;
                 modifiedDurabilityCount++;
             }
 
+            // Adjust fuel resource values
             if (item.Parent == FuelParentId)
             {
                 if (item.Id == "5d1b36a186f774253398433") // Metal Fuel Tank
@@ -212,6 +218,7 @@ public class EditDatabaseValues(
         var hideoutZones = hideoutTable.Areas;
         var hideoutProds = hideoutTable.Production.Recipes;
 
+        // Modify Hideout Area build times
         foreach (var zone in hideoutZones)
         {
             if (zone.Stages == null) continue;
@@ -222,11 +229,12 @@ public class EditDatabaseValues(
             }
         }
 
+        // Modify Hideout Area craft times
         foreach (var production in hideoutProds)
         {
             if (production.Id == "5d5c205bd582a50d042a3c0e")
             {
-                production.ProductionTime = 12600;
+                production.ProductionTime = 12600; // Bitcoin set to 3.5hrs
             }
             else
             {
