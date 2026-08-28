@@ -66,7 +66,7 @@ public class EditDatabaseValues(
         EditItems();
         EditHideout();
 
-        logger.Success($"[{ModName}]: Database modifications complete!");
+        logger.Success($"{ModName} loaded!");
         return Task.CompletedTask;
     }
 
