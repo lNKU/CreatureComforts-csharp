@@ -197,7 +197,7 @@ public class EditDatabaseValues(
             // Adjust fuel resource values
             if (item.Parent == FuelParentId)
             {
-                if (item.Id == "5d1b36a186f774253398433") // Metal Fuel Tank
+                if (item.Id == "5d1b36a186f7742523398433") // Metal Fuel Tank
                 {
                     item.Properties.Resource = _config.MetalFuelTankResource;
                     item.Properties.MaxResource = _config.MetalFuelTankResource;
