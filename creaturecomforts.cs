@@ -35,7 +35,7 @@ public class ModConfig
     public int FleaMarketMinLevel { get; set; } = 25;
     public int ScavCooldownMinSeconds { get; set; } = 300;
     public int ScavCooldownMaxSeconds { get; set; } = 900;
-    public int HideoutBuildMinSeconds { get; set; } = 900;
+    public int HideoutBuildMinSeconds { get; set; } = 300;
     public int HideoutBuildMaxSeconds { get; set; } = 900;
     public int HideoutCraftMinSeconds { get; set; } = 15;
     public int HideoutCraftMaxSeconds { get; set; } = 120;
@@ -76,6 +76,8 @@ public class EditDatabaseValues(
         string configDir = Path.Combine(modFolder, "config");
         string configPath = Path.Combine(configDir, "config.json");
         
+        Directory.CreateDirectory(configDir);
+        
         string[] pathSegments = configPath.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
         string displayPath = pathSegments.Length >= 4 
             ? $"./{string.Join('/', pathSegments.TakeLast(4))}" 
@@ -86,7 +88,7 @@ public class EditDatabaseValues(
             _config = new ModConfig();
             string defaultJson = JsonSerializer.Serialize(_config, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(configPath, defaultJson);
-            logger.Warning($"[{ModName}]: Created default config in {displayPath}.");
+            logger.Warning($"[{ModName}] Created default config in {displayPath}.");
             return;
         }
 
@@ -94,11 +96,11 @@ public class EditDatabaseValues(
         {
             string json = File.ReadAllText(configPath);
             _config = JsonSerializer.Deserialize<ModConfig>(json) ?? new ModConfig();
-            logger.Info($"[{ModName}]: Successfully loaded config.");
+            logger.Success($"[{ModName}] Successfully loaded config.");
         }
         catch (Exception ex)
         {
-            logger.Error($"[{ModName}]: Failed to read config file. Using default settings. Exception: {ex.Message}");
+            logger.Error($"[{ModName}] Failed to read config file. Using default settings. Exception: {ex.Message}");
             _config = new ModConfig();
         }
     }
@@ -107,7 +109,7 @@ public class EditDatabaseValues(
     {
         if (_config.EnableLogging)
         {
-            logger.LogWithColor($"[{ModName}]: {message}", color);
+            logger.LogWithColor($"[{ModName}] {message}", color);
         }
     }
 
@@ -122,6 +124,8 @@ public class EditDatabaseValues(
         ragfair.MinUserLevel = _config.FleaMarketMinLevel;
 
         // Scale experience required for new levels
+        long totalExp = 0;
+        
         for (int i = 0; i < globalsXP.Length; i++)
         {
             var expLvl = globalsXP[i];
@@ -137,6 +141,10 @@ public class EditDatabaseValues(
             };
 
             expLvl.Experience = (int)Math.Ceiling(reqExp * multiplier);
+            totalExp += expLvl.Experience;
+            Log($"Lv.{level} - Base Required EXP: {reqExp:N0}", ConsoleColor.Cyan);
+            Log($"Lv.{level} - Modified Required EXP: {expLvl.Experience:N0}", ConsoleColor.Yellow);
+            Log($"Lv.{level} - Total Required EXP: {totalExp:N0}\n", ConsoleColor.Yellow);
         }
 
         // Halve Energy and Hydration drain
@@ -169,7 +177,7 @@ public class EditDatabaseValues(
         };
 
         Log($"BaseOverweightLimits -> {globalsStamina.BaseOverweightLimits.X}kg / {globalsStamina.BaseOverweightLimits.Y}kg", ConsoleColor.Cyan);
-        Log($"SprintOverweightLimits -> {globalsStamina.SprintOverweightLimits.X}kg / {globalsStamina.SprintOverweightLimits.Y}kg", ConsoleColor.Yellow);
+        Log($"SprintOverweightLimits -> {globalsStamina.SprintOverweightLimits.X}kg / {globalsStamina.SprintOverweightLimits.Y}kg\n", ConsoleColor.Yellow);
     }
 
     private void EditItems()
@@ -210,7 +218,7 @@ public class EditDatabaseValues(
             }
         }
 
-        logger.LogWithColor($"Removed durability burn modifier from {modifiedDurabilityCount} silencers & ammo items.", ConsoleColor.Green);
+        logger.LogWithColor($"[{ModName}] Removed durability burn modifier from {modifiedDurabilityCount} silencers & ammo items.", ConsoleColor.Green);
     }
 
     private void EditHideout()
@@ -249,6 +257,8 @@ public class EditDatabaseValues(
             }
         }
 
-        Log("Hideout construction and production timers randomized.", ConsoleColor.Cyan);
+        logger.Success($"[{ModName}] Hideout construction stages randomized between {_config.HideoutBuildMinSeconds} and {_config.HideoutBuildMaxSeconds} seconds.");
+        logger.Success($"[{ModName}] Hideout production timers randomized between {_config.HideoutCraftMinSeconds} and {_config.HideoutCraftMaxSeconds} seconds.");
+
     }
 }
