@@ -223,9 +223,16 @@ public class EditDatabaseValues(
         {
             if (zone.Stages == null) continue;
 
-            foreach (var stage in zone.Stages.Values)
+            foreach (var (key, stage) in zone.Stages)
             {
-                stage.ConstructionTime = Random.Shared.Next(_config.HideoutBuildMinSeconds, _config.HideoutBuildMaxSeconds);
+                if (int.TryParse(key, out int level) && level <= 1)
+                {
+                    stage.ConstructionTime = 0;
+                }
+                else
+                {
+                    stage.ConstructionTime = Random.Shared.Next(_config.HideoutBuildMinSeconds, _config.HideoutBuildMaxSeconds);
+                }
             }
         }
 
