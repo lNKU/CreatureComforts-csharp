@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
+using System.Collections.Generic;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
 using SPTarkov.Server.Core.Models.Enums.Hideout;
@@ -89,6 +90,7 @@ public class EditDatabaseValues(
     ISptLogger<EditDatabaseValues> logger,
     GlobalTable globalTable,
     TemplateTable templateTable,
+    LocaleTable localeTable,
     BotTable botTable,
     HideoutTable hideoutTable)
     : IOnLoad
@@ -101,7 +103,7 @@ public class EditDatabaseValues(
     private const string KeycardParentId = "5c164d2286f774194c5e69fa";
 
     private ModConfig _config = new();
-
+    
     public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         LoadConfig();
@@ -289,11 +291,31 @@ public class EditDatabaseValues(
                 item.Properties.BlocksFolding = false;
             }
 
+            // Remove Durability Burn Modificators for all items
+            if (item.Properties.DurabilityBurnModificator.HasValue)
+            {
+                item.Properties.DurabilityBurnModificator = 1;
+                modifiedDurabilityCount++;
+            }
+            
+            // Remove Durability Burn Ratio for all weapons
+            if (item.Properties.DurabilityBurnRatio.HasValue)
+            {
+                item.Properties.DurabilityBurnRatio = 1;
+                modifiedDurabilityCount++;
+            }
+
             // Remove durability burn for suppressors & ammo
             if (item.Parent == SilencerParentId || item.Parent == AmmoParentId)
             {
                 item.Properties.DurabilityBurnModificator = 1f;
                 modifiedDurabilityCount++;
+            }
+            
+            // halve ergo penalty for suppressors
+            if (item.Parent == SilencerParentId)
+            {
+                item.Properties.Ergonomics = Math.Floor(item.Properties.Ergonomics.Value / 2.0);
             }
             
             // Key & Keycard recoloring logic
