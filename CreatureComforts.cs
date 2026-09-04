@@ -8,11 +8,13 @@ using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using System.Collections.Generic;
 using SPTarkov.Server.Core.Models.Eft.Common;
+using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
 using SPTarkov.Server.Core.Models.Enums.Hideout;
 using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Server.Core.Models.Spt.Tables;
+using Path = System.IO.Path;
 
 namespace CreatureComforts;
 
@@ -22,7 +24,7 @@ public record ModMetadata : IModMetadata
     public string Name { get; init; } = "CreatureComforts";
     public string Author { get; init; } = "INKU";
     public List<string>? Contributors { get; init; }
-    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Version Version { get; init; } = new("1.3.0");
     public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.0");
     public List<string>? Incompatibilities { get; init; }
     public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
@@ -79,6 +81,10 @@ public class ModConfig
         "64ccc2111779ad6ba200a139", "5c94bbff86f7747ee735c08f", "591afe0186f77431bd616a11", "6761a6ccd9bbb27ad703c48a", "68e95f4fa4a577e907015787",
         "59136e1e86f774432f15d133"
     ];
+    public List<string> MidKeys { get; set; } =
+    [
+        ""
+    ];
     public List<string> MehhKeys { get; set; } =
     [
         "658199972dc4e60f6d556a2f", "6581998038c79576a2569e11", "5d08d21286f774736e7c94c3", "5da743f586f7744014504f72", "5913611c86f77479e0084092"
@@ -90,8 +96,8 @@ public class EditDatabaseValues(
     ISptLogger<EditDatabaseValues> logger,
     GlobalTable globalTable,
     TemplateTable templateTable,
-    LocaleTable localeTable,
-    BotTable botTable,
+    TradersTable tradersTable,
+    TraderConfig traderConfig,
     HideoutTable hideoutTable)
     : IOnLoad
 {
@@ -111,6 +117,8 @@ public class EditDatabaseValues(
         EditGlobals();
         EditItems();
         EditHideout();
+        EditTraders();
+        EditTraderTimers();
 
         logger.Success($"{ModName} loaded!");
         return Task.CompletedTask;
@@ -175,7 +183,7 @@ public class EditDatabaseValues(
         }
         catch (Exception ex)
         {
-            logger.Error($"[{ModName}] Failed to read config file.\nNON-FATAL ERROR: {ex.Message}");
+            logger.Error($"[{ModName}] Failed to read config file.\n[{ModName}] !!!NON-FATAL ERROR!!!: {ex.Message}");
             logger.Warning($"[{ModName}] Using default settings for this session.\n");
             
             _config = new ModConfig();
@@ -227,9 +235,9 @@ public class EditDatabaseValues(
 
             expLvl.Experience = (int)Math.Ceiling(reqExp * multiplier);
             totalExp += expLvl.Experience;
-            Log($"Lv.{level} - Base Required EXP: {reqExp:N0}", ConsoleColor.Cyan);
-            Log($"Lv.{level} - Modified Required EXP: {expLvl.Experience:N0}", ConsoleColor.Yellow);
-            Log($"Lv.{level} - Total Required EXP: {totalExp:N0}\n", ConsoleColor.Yellow);
+            Log($"\n *** DEBUG***  Lv.{level} - Base Required EXP: {reqExp:N0}", ConsoleColor.Cyan);
+            Log($" *** DEBUG***  Lv.{level} - Modified Required EXP: {expLvl.Experience:N0}", ConsoleColor.Yellow);
+            Log($" *** DEBUG***  Lv.{level} - Total Required EXP: {totalExp:N0}\n", ConsoleColor.Yellow);
         }
 
         // Halve Energy and Hydration drain
@@ -261,8 +269,8 @@ public class EditDatabaseValues(
             Y = globalsStamina.WalkSpeedOverweightLimits.Y * 1.2f
         };
 
-        Log($"BaseOverweightLimits -> {globalsStamina.BaseOverweightLimits.X}kg / {globalsStamina.BaseOverweightLimits.Y}kg", ConsoleColor.Cyan);
-        Log($"SprintOverweightLimits -> {globalsStamina.SprintOverweightLimits.X}kg / {globalsStamina.SprintOverweightLimits.Y}kg\n", ConsoleColor.Yellow);
+        Log($" *** DEBUG***  BaseOverweightLimits -> {globalsStamina.BaseOverweightLimits.X}kg / {globalsStamina.BaseOverweightLimits.Y}kg", ConsoleColor.Cyan);
+        Log($" *** DEBUG***  SprintOverweightLimits -> {globalsStamina.SprintOverweightLimits.X}kg / {globalsStamina.SprintOverweightLimits.Y}kg\n", ConsoleColor.Yellow);
     }
 
     private void EditItems()
@@ -271,12 +279,14 @@ public class EditDatabaseValues(
         int modifiedDurabilityCount = 0;
         int markedKeysCount = 0;
         int valuableKeysCount = 0;
+        int midKeysCount = 0;
         int mehhKeysCount = 0;
         int questKeysCount = 0;
         int defaultKeysCount = 0;
         
         var questKeysSet = new HashSet<string>(_config.QuestKeys ?? []);
         var mehhKeysSet = new HashSet<string>(_config.MehhKeys ?? []);
+        var midKeysSet = new HashSet<string>(_config.MidKeys ?? []);
         var valuableKeysSet = new HashSet<string>(_config.ValuableKeys ?? []);
         var markedKeysSet = new HashSet<string>(_config.MarkedKeys ?? []);
 
@@ -291,19 +301,21 @@ public class EditDatabaseValues(
                 item.Properties.BlocksFolding = false;
             }
 
+            // TODO - Fix code so that only weapons and attachments
+            // TODO - with additional durability drain are removed
             // Remove Durability Burn Modificators for all items
-            if (item.Properties.DurabilityBurnModificator.HasValue)
-            {
-                item.Properties.DurabilityBurnModificator = 1;
-                modifiedDurabilityCount++;
-            }
-            
-            // Remove Durability Burn Ratio for all weapons
-            if (item.Properties.DurabilityBurnRatio.HasValue)
-            {
-                item.Properties.DurabilityBurnRatio = 1;
-                modifiedDurabilityCount++;
-            }
+            // if (item.Properties.DurabilityBurnModificator.HasValue)
+            // {
+            //     item.Properties.DurabilityBurnModificator = 1;
+            //     modifiedDurabilityCount++;
+            // }
+            //
+            // // Remove Durability Burn Ratio for all weapons
+            // if (item.Properties.DurabilityBurnRatio.HasValue)
+            // {
+            //     item.Properties.DurabilityBurnRatio = 1;
+            //     modifiedDurabilityCount++;
+            // }
 
             // Remove durability burn for suppressors & ammo
             if (item.Parent == SilencerParentId || item.Parent == AmmoParentId)
@@ -339,14 +351,19 @@ public class EditDatabaseValues(
                     item.Properties.BackgroundColor = "violet"; // High-value keys/keycards
                     valuableKeysCount++;
                 }
+                else if (midKeysSet.Contains(item.Id))
+                {
+                    item.Properties.BackgroundColor = "blue"; // Medium-value keys/keycards
+                    midKeysCount++;
+                }
                 else if (mehhKeysSet.Contains(item.Id))
                 {
-                    item.Properties.BackgroundColor = "green"; // Low/Mid-value keys/keycards
+                    item.Properties.BackgroundColor = "green"; // Low-value keys/keycards
                     mehhKeysCount++;
                 }
                 else if (isKeyByParent)
                 {
-                    item.Properties.BackgroundColor = "black"; // All other keys
+                    item.Properties.BackgroundColor = "grey"; // All other keys
                     defaultKeysCount++;
                 }
             }
@@ -372,12 +389,13 @@ public class EditDatabaseValues(
         {
             int totalKeysCount = markedKeysCount + valuableKeysCount + mehhKeysCount + defaultKeysCount;
             
-            Log("Key Color Breakdown:", ConsoleColor.Cyan);
-            Log($"  - Quest (Red): {questKeysCount}", ConsoleColor.DarkRed);
-            Log($"  - Marked (Yellow): {markedKeysCount}", ConsoleColor.Yellow);
-            Log($"  - Valuable (Violet): {valuableKeysCount}", ConsoleColor.Magenta);
-            Log($"  - Low Value (Green): {mehhKeysCount}", ConsoleColor.Green);
-            Log($"  - Useless (Grey): {defaultKeysCount}", ConsoleColor.White);
+            Log(" *** DEBUG***  Key Color Breakdown:", ConsoleColor.Cyan);
+            Log($" *** DEBUG***  - Quest (Red): {questKeysCount}", ConsoleColor.DarkRed);
+            Log($" *** DEBUG***  - Marked (Yellow): {markedKeysCount}", ConsoleColor.Yellow);
+            Log($" *** DEBUG***  - Valuable (Violet): {valuableKeysCount}", ConsoleColor.Magenta);
+            Log($" *** DEBUG***  - Mid Value (Blue): {midKeysCount}", ConsoleColor.Blue);
+            Log($" *** DEBUG***  - Low Value (Green): {mehhKeysCount}", ConsoleColor.Green);
+            Log($" *** DEBUG***  - Useless (Grey): {defaultKeysCount}\n", ConsoleColor.White);
             logger.LogWithColor($"[{ModName}] Updated background colors for {totalKeysCount} keys and keycards.", ConsoleColor.Green);
         }
     }
@@ -418,8 +436,166 @@ public class EditDatabaseValues(
             }
         }
 
-        logger.Success($"[{ModName}] Hideout construction stages randomized to be between {_config.HideoutBuildMinSeconds} and {_config.HideoutBuildMaxSeconds} seconds.");
-        logger.Success($"[{ModName}] Hideout production timers randomized to be between {_config.HideoutCraftMinSeconds} and {_config.HideoutCraftMaxSeconds} seconds.");
+        // logger.Success($"[{ModName}]  Hideout construction stages randomized to be between {_config.HideoutBuildMinSeconds} and {_config.HideoutBuildMaxSeconds} seconds.");
+        // logger.Success($"[{ModName}]  Hideout production timers randomized to be between {_config.HideoutCraftMinSeconds} and {_config.HideoutCraftMaxSeconds} seconds.");
+        
+        logger.Success($"[{ModName}] Hideout construction stages randomized to be between {_config.HideoutBuildMinSeconds}s and {_config.HideoutBuildMaxSeconds}s ({_config.HideoutBuildMinSeconds / 60.0:0.##} - {_config.HideoutBuildMaxSeconds / 60.0:0.##} minutes).");
+        logger.Success($"[{ModName}] Hideout production timers randomized to be between {_config.HideoutCraftMinSeconds}s and {_config.HideoutCraftMaxSeconds}s ({_config.HideoutCraftMinSeconds / 60.0:0.##} - {_config.HideoutCraftMaxSeconds / 60.0:0.##} minutes).\n");
 
+    }
+
+    private void EditTraders()
+    {
+        var traders = tradersTable;
+        var ignoredTraders = new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
+        { 
+            "БТР", "caretaker", "Unknown", "Scorpion", "Arena", "Storyteller"
+        };
+        
+        foreach (var (traderId, trader) in traders)
+        {
+            var traderBase = trader.Base;
+            if (traderBase?.LoyaltyLevels == null) continue;
+            
+            string traderName = traderBase.Nickname ?? traderId;
+            
+            if (ignoredTraders.Contains(traderName)) continue;
+            
+            Log($" *** DEBUG***  {traderName}({traderId})", ConsoleColor.Cyan);
+            
+            var loyaltyLevels = traderBase.LoyaltyLevels;
+
+            for (int i = 0; i < loyaltyLevels.Count; i++)
+            {
+                var level = loyaltyLevels[i];
+                int levelNum = i + 1;
+
+                switch (traderName)
+                {
+                    case "Prapor":
+                        level.MinStanding /= 2;
+                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
+                        break;
+
+                    case "Therapist":
+                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 2.85);
+                        if (levelNum == 3)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 3.05);
+                        }
+                        else if (levelNum == 4)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 3.35);
+                        }
+
+                        break;
+
+                    case "Fence":
+                        if (levelNum == 2)
+                        {
+                            level.MinStanding /= 3;
+                        }
+
+                        break;
+
+                    case "Skier":
+                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 0.95);
+                        if (levelNum == 3)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
+                        }
+                        else if (levelNum == 4)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 0.95);
+                            level.MinStanding /= 1.25;
+                        }
+
+                        break;
+
+                    case "Peacekeeper":
+                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 0.73);
+                        if (levelNum == 3)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.22);
+                        }
+                        else if (levelNum == 4)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.3);
+                            level.MinStanding /= 1.2;
+                        }
+
+                        break;
+
+                    case "Mechanic":
+                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.12);
+                        if (levelNum == 3)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
+                        }
+                        else if (levelNum == 4)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.18);
+                            level.MinStanding /= 1.2;
+                        }
+
+                        break;
+
+                    case "Ragman":
+                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.1);
+                        if (levelNum == 3)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
+                        }
+                        else if (levelNum == 4)
+                        {
+                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.3);
+                        }
+
+                        break;
+
+                    case "Jaeger":
+                        level.MinStanding = 0;
+                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 2.0);
+                        break;
+                }
+
+                Log($" *** DEBUG***  {traderName} - Lv{levelNum}. minStanding is now {level.MinStanding:F2}", ConsoleColor.Yellow);
+                Log($" *** DEBUG***  {traderName} - Lv{levelNum}. minSalesSum is now {level.MinSalesSum:N0}\n", ConsoleColor.Cyan);
+            }
+        }
+    }
+
+    private void EditTraderTimers()
+    {
+        var tradersTimers = traderConfig.UpdateTime;
+        var ignoredTraderTimers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
+        { 
+            "btr", "x", ""
+        };
+        if (tradersTimers == null) return;
+        
+        // Random.Shared.Next();
+
+        foreach (var trader in tradersTimers)
+        {
+            string traderName = trader.Name;
+        
+            if (ignoredTraderTimers.Contains(traderName)) continue;
+            
+            Log($" *** DEBUG***  {trader.Name} has a minimum refresh of {trader.Seconds.Min}s and maximum refresh of {trader.Seconds.Max}s. ({trader.Seconds.Min / 60.0:0.##} - {trader.Seconds.Max/ 60.0:0.##} minutes)", ConsoleColor.Yellow);
+        }
+        {
+            
+        }
+        
+
+        // traderConfig.updateTime.filter(trader => trader.traderId !== "ragfair").map((trader) => {
+        //     this.logger.logWithColor(`[${this.modName}]: Trader: ${trader?._name}`, LogTextColor.YELLOW); // Log trader name for reference
+        //     this.logger.logWithColor(`[${this.modName}]: Original Min: ${trader.seconds.min} seconds, Original Max: ${trader.seconds.max} seconds`, LogTextColor.GRAY);
+        //     
+        //     trader.seconds.min = Math.floor(Math.random() * (2500 - 1000 + 1)) + 1200;
+        //     trader.seconds.max = trader.seconds.min * 2;
+        //     this.logger.logWithColor(`[${this.modName}]: Updated Min: ${trader.seconds.min} seconds, Updated Max: ${trader.seconds.max} seconds\n`, LogTextColor.WHITE);
+        // });
     }
 }
