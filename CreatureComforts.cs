@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
+using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Enums.Hideout;
 using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
@@ -290,7 +291,7 @@ public class EditDatabaseValues(
         var valuableKeysSet = new HashSet<string>(_config.ValuableKeys ?? []);
         var markedKeysSet = new HashSet<string>(_config.MarkedKeys ?? []);
 
-
+		
         foreach (var item in items.Values)
         {
             // Remove folding blocks for weapons
@@ -316,6 +317,21 @@ public class EditDatabaseValues(
             //     item.Properties.DurabilityBurnRatio = 1;
             //     modifiedDurabilityCount++;
             // }
+            
+            // allow army bandage to heal heavy bleeds
+            if (item.Id == "5751a25924597722c463c472")
+            {
+                if (item.Properties.EffectsDamage != null)
+                {
+                    item.Properties.EffectsDamage[DamageEffectType.HeavyBleeding] = new EffectsDamageProperties
+                    {
+                        Cost = 2,
+                        Delay = 0,
+                        Duration = 0,
+                        FadeOut = 0
+                    };
+                }
+            }
 
             // Remove durability burn for suppressors & ammo
             if (item.Parent == SilencerParentId || item.Parent == AmmoParentId)
