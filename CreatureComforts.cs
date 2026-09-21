@@ -1,17 +1,11 @@
-﻿using System.IO;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
-using System.Collections.Generic;
-using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
-using SPTarkov.Server.Core.Models.Eft.Hideout;
 using SPTarkov.Server.Core.Models.Enums;
-using SPTarkov.Server.Core.Models.Enums.Hideout;
 using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Server.Core.Models.Spt.Tables;
@@ -55,40 +49,45 @@ public class ModConfig
     public List<string> MarkedKeys { get; set; } =
     [
         "5780cf7f2459777de4559322", "5d80c62a86f7744036212b3f", "5d80c60f86f77440373c4ece", "62987dfc402c7f69bf010923",
-        "64ccc25f95763a1ae376e447", "63a3a93f8a56922e82001f5d", "64d4b23dc1b37504b41ac2b6"
+        "64ccc25f95763a1ae376e447", "63a3a93f8a56922e82001f5d", "64d4b23dc1b37504b41ac2b6", "5c1d0f4986f7744bb01837fa", 
+        "5c1d0efb86f7744baf2e7b7b", "5c1d0c5f86f7744bb2683cf0", "5c1d0dc586f7744baf2e7b79", "5c1e495a86f7743109743dfb", 
+        "5c1d0d6d86f7744bb2683e1f", "5c94bbff86f7747ee735c08f"
     ];
     public List<string> ValuableKeys { get; set; } =
     [
-        "5448ba0b4bdc2d02308b456c", "5780d0532459777a5108b9a2", "5913877a86f774432f15d444", "5780d0652459777df90dcb74", "591383f186f7744a4c5edcf3", 
-        "591382d986f774465a6413a7", "59136e1e86f77432f15d133", "59387a4986f77401cc236e62", "5672c92d4bdc2d180f8b4567", "59148c8a86f774197930e983", 
-        "5780cf942459777df90dcb72", "5780cfa52459777dfb276eb1", "5ad5d64486f774079b080af8", "5e42c71586f7747f245e1343", "5ad5cfbd86f7742c825d6104", 
-        "5addaffe86f77470b455f900", "5ad5d7d286f77450166e0a89", "5e42c81886f7742a01529f57", "5e42c83786f7742a021fdf3c", "5ad5db3786f7743568421cce", 
-        "5c1d0f4986f7744bb01837fa", "5c1d0efb86f7744baf2e7b7b", "5c1d0c5f86f7744bb2683cf0", "5c1d0dc586f7744baf2e7b79", "5c1e495a86f7743109743dfb", 
-        "5c1d0d6d86f7744bb2683e1f", "5c1e2a1e86f77431ea0ea84c", "5c1e2d1f86f77431e9280bee", "5c1f79a086f7746ed066fb8f", "5d947d4e86f774447b415895", 
-        "5d947d3886f774447b415893", "5d8e0e0e86f774321140eb56", "5d80cb3886f77440556dbf09", "5d95d6fa86f77424484aa5e9", "5d80cb5686f77440545d1286", 
-        "5d95d6be86f77424444eb3a7", "5d80c6c586f77440351beef1", "5d80ccac86f77470841ff452", "5d80ccdd86f77474f7575e02", "5d80cd1a86f77402aa362f42", 
-        "5d80c66d86f774405611c7d6", "5d80c6fc86f774403a401e3c", "5d80c88d86f77440556dbf07", "61aa5b7db225ac1ead7957c1", "61aa5ba8018e9821b7368da9", 
-        "61aa5b518f5e7a39b41416e2", "61a6444b8c141d68246e2d2f", "62987da96188c076bc0d8c51", "62987c658081af308d7558c6", "5a0f08bc86f77478f33b84c2", 
-        "5d8e15b686f774445103b190", "5a0eb6ac86f7743124037a28", "5a0f068686f7745b0d4ea242", "5a0f0f5886f7741c4e32a472", "5a0dc45586f7742f6b0b73e3", 
-        "5a0dc95c86f77452440fc675", "5a144dfd86f77445cb5a0982", "5a0ec6d286f7742c0b518fb5", "5a0ee30786f774023b6ee08f", "5a0ee34586f774023b6ee092", 
-        "5a13eebd86f7746fd639aa93", "5a0ee37f86f774023657a86f", "5a1452ee86f7746f33111763", "5a13ef7e86f7741290491063", "5a13f46386f7741dd7384b04", 
-        "5a0eff2986f7741fd654e684", "5a0ea64786f7741707720468", "5eff09cd30a7dc22fd1ddfed", "5a144bdb86f7741d374bbde0", "5a0ee4b586f7743698200d22", 
-        "5a13f24186f77410e57c5626", "5a13f35286f77413ef1436b0", "5a145d4786f7744cbb6f4a12", "5a145d7b86f7744cbb6f4a13", "5a0eec9686f77402ac5c39f2", 
-        "5a0eee1486f77402aa773226", "5a0ea79b86f7741d4a35298e", "63a39c7964283b5e9c56b280", "64ccc1ec1779ad6ba200a137", "63a71e781031ac76fe773c7d", 
-        "64ccc1d4a0f13c24561edf27", "64ccc1f4ff54fb38131acf27", "63a71e922b25f7513905ca20", "63a71e86b7f4570d3a293169", "63a39fc0af870e651d58e6ae", 
-        "63a39fd1c9b3aa4b61683efb", "63a39f6e64283b5e9c56b289", "63a39667c9b3aa4b61683e98", "63a71ed21031ac76fe773c7f", "64ccc246ff54fb38131acf29", 
-        "6582dbe43a2e5248357dbe9a", "6582dc4b6ba9e979af6b79f4", "6582dbf0b8d7830efc45016f", "6582dc5740562727a654ebb1", "64ccc24de61ea448b507d34d", 
-        "64ccc206793ca11c8f450a38", "64ccc1fe088064307e14a6f7", "63a39f08cd6db0635c197600", "63a399193901f439517cafb6", "63a397d3af870e651d58e65b", 
-        "64ccc2111779ad6ba200a139", "5c94bbff86f7747ee735c08f", "591afe0186f77431bd616a11", "6761a6ccd9bbb27ad703c48a", "68e95f4fa4a577e907015787",
-        "59136e1e86f774432f15d133"
+        "5448ba0b4bdc2d02308b456c", "5780d0532459777a5108b9a2", "5780d0652459777df90dcb74", "591382d986f774465a6413a7", 
+        "59136e1e86f774432f15d133", "59387a4986f77401cc236e62", "5672c92d4bdc2d180f8b4567", "59148c8a86f774197930e983", 
+        "5780cf942459777df90dcb72", "5ad5d64486f774079b080af8", "5e42c71586f7747f245e1343", "5ad5db3786f7743568421cce",
+        "5ad5d7d286f77450166e0a89", "5addaffe86f77470b455f900", "5e42c81886f7742a01529f57", "5e42c83786f7742a021fdf3c", 
+        "5c1e2a1e86f77431ea0ea84c", "5c1e2d1f86f77431e9280bee", "5c1f79a086f7746ed066fb8f", "5d947d3886f774447b415893", 
+        "5d8e0e0e86f774321140eb56", "5d80c6c586f77440351beef1", "5d80ccac86f77470841ff452", "5d80ccdd86f77474f7575e02", 
+        "5d80cd1a86f77402aa362f42", "5d80c66d86f774405611c7d6", "5d80c6fc86f774403a401e3c", "5d80c88d86f77440556dbf07", 
+        "61aa5b7db225ac1ead7957c1", "61aa5ba8018e9821b7368da9", "61aa5b518f5e7a39b41416e2", "61a6444b8c141d68246e2d2f", 
+        "62987da96188c076bc0d8c51", "62987c658081af308d7558c6", "5a0f08bc86f77478f33b84c2", "5d8e15b686f774445103b190", 
+        "5a0eb6ac86f7743124037a28", "5a0f068686f7745b0d4ea242", "5a0f0f5886f7741c4e32a472", "5a0dc45586f7742f6b0b73e3", 
+        "5a0dc95c86f77452440fc675", "5a144dfd86f77445cb5a0982", "5a0ee30786f774023b6ee08f", "5a0ee34586f774023b6ee092", 
+        "5a13eebd86f7746fd639aa93", "5a0ee37f86f774023657a86f", "5a1452ee86f7746f33111763", "5a13ef7e86f7741290491063", 
+        "5a13f46386f7741dd7384b04", "5a0eff2986f7741fd654e684", "5a0ea64786f7741707720468", "5eff09cd30a7dc22fd1ddfed", 
+        "5a0ee4b586f7743698200d22", "5a13f24186f77410e57c5626", "5a13f35286f77413ef1436b0", "5a145d4786f7744cbb6f4a12", 
+        "5a145d7b86f7744cbb6f4a13", "5a0eec9686f77402ac5c39f2", "5a0eee1486f77402aa773226", "5a0ea79b86f7741d4a35298e", 
+        "63a39c7964283b5e9c56b280", "64ccc1ec1779ad6ba200a137", "63a71e781031ac76fe773c7d", "64ccc1d4a0f13c24561edf27", 
+        "64ccc1f4ff54fb38131acf27", "63a71e922b25f7513905ca20", "63a71e86b7f4570d3a293169", "63a39fc0af870e651d58e6ae", 
+        "63a39f6e64283b5e9c56b289", "63a39667c9b3aa4b61683e98", "63a71ed21031ac76fe773c7f", "6582dbe43a2e5248357dbe9a", 
+        "6582dc4b6ba9e979af6b79f4", "63a399193901f439517cafb6", "63a397d3af870e651d58e65b", "64ccc2111779ad6ba200a139", 
+        "591afe0186f77431bd616a11", "6761a6ccd9bbb27ad703c48a", "68e95f4fa4a577e907015787", "5a0ec6d286f7742c0b518fb5", 
+        "64ccc24de61ea448b507d34d", "64ccc206793ca11c8f450a38", "63a39f08cd6db0635c197600", "6582dbf0b8d7830efc45016f",
+        "6582dc5740562727a654ebb1"
     ];
     public List<string> MidKeys { get; set; } =
     [
-        ""
+        "5913877a86f774432f15d444", "5780cfa52459777dfb276eb1", "5d947d4e86f774447b415895", "5d80cb3886f77440556dbf09",
+        "5d95d6fa86f77424484aa5e9", "5d80cb5686f77440545d1286", "5d95d6be86f77424444eb3a7", "64ccc246ff54fb38131acf29",
+        "64ccc1fe088064307e14a6f7", "59136a4486f774447a1ed172"
     ];
     public List<string> MehhKeys { get; set; } =
     [
-        "658199972dc4e60f6d556a2f", "6581998038c79576a2569e11", "5d08d21286f774736e7c94c3", "5da743f586f7744014504f72", "5913611c86f77479e0084092"
+        "658199972dc4e60f6d556a2f", "6581998038c79576a2569e11", "5d08d21286f774736e7c94c3", "5da743f586f7744014504f72", 
+        "5913611c86f77479e0084092", "591383f186f7744a4c5edcf3", "5ad5cfbd86f7742c825d6104", "63a39fd1c9b3aa4b61683efb"
     ];
 }
 
@@ -103,11 +102,37 @@ public class EditDatabaseValues(
     : IOnLoad
 {
     private const string ModName = "CreatureComforts";
-    private const string SilencerParentId = "550aa4cd4bdc2dd8348b456c";
-    private const string AmmoParentId = "5485a8684bdc2da71d8b4567";
     private const string FuelParentId = "5d650c3e815116009f6201d2";
     private const string MechanicalKeyParentId = "5c99f98d86f7745c314214b3";
+    private const string SilencerParentId = "550aa4cd4bdc2dd8348b456c";
     private const string KeycardParentId = "5c164d2286f774194c5e69fa";
+    private const string AssaultScopeParentId = "55818add4bdc2d5b648b456f";
+    private const string ReflexSightParentId = "55818ad54bdc2ddc698b4569";
+    private const string CompactReflexSightParentId = "55818acf4bdc2dde698b456b";
+    private const string ScopeSightParentId = "55818ae44bdc2dde698b456c";
+    private const string SpecialSightParentId = "55818aeb4bdc2ddc698b456a";
+    private static bool TrySetColor(TemplateItem item, HashSet<string> set, string color, ref int counter)
+    {
+        if (!set.Contains(item.Id)) return false;
+        item.Properties!.BackgroundColor = color;
+        counter++;
+        return true;
+    }
+    private static readonly string[] FlavorText =
+    [
+        "Your gear is now legally obligated to last more than one raid.",
+        "Did you forget to reticulate your splines again?",
+        "Your Discord messages are shameful, you heathen.",
+        "Scav cooldown shortened. Your alt is welcome.",
+        "Keys now color-coded for people who can't read tooltips.",
+        "Say hi on Discord! I like talking to new people, sometimes.",
+        "I'm still not maxxed in Old School RuneScape. Shameful, right?",
+        "Your stock now folds as easily as your confidence.",
+        "You like good music? throatcut, Ocean Grove, and Northlane. You're welcome.",
+        "Trader loyalty made slightly less soul-crushing.",
+        "Weapons no longer refuse to fold out of spite.",
+        "Spiritbox, amirite?"
+    ];
 
     private ModConfig _config = new();
     
@@ -120,8 +145,9 @@ public class EditDatabaseValues(
         EditHideout();
         EditTraders();
         EditTraderTimers();
-
-        logger.Success($"{ModName} loaded!");
+    
+        string flavor = FlavorText[Random.Shared.Next(FlavorText.Length)];
+        logger.Success($"{ModName} loaded! {flavor}");
         return Task.CompletedTask;
     }
 
@@ -290,33 +316,34 @@ public class EditDatabaseValues(
         var midKeysSet = new HashSet<string>(_config.MidKeys ?? []);
         var valuableKeysSet = new HashSet<string>(_config.ValuableKeys ?? []);
         var markedKeysSet = new HashSet<string>(_config.MarkedKeys ?? []);
-
 		
         foreach (var item in items.Values)
         {
+            bool durabilityModified = false;
+            
             // Remove folding blocks for weapons
             if (item.Properties == null) continue;
+            
+            item.Properties.BlocksFolding = false;
 
-            if (item.Properties.BlocksFolding == true)
+            // remove any durability burn effect that makes durability drain FASTER (values > 1);
+            // leave anything that slows drain (values < 1) untouched
+            if (item.Properties.DurabilityBurnModificator is > 1)
             {
-                item.Properties.BlocksFolding = false;
+                item.Properties.DurabilityBurnModificator = 1f;
+                durabilityModified = true;
             }
 
-            // TODO - Fix code so that only weapons and attachments
-            // TODO - with additional durability drain are removed
-            // Remove Durability Burn Modificators for all items
-            // if (item.Properties.DurabilityBurnModificator.HasValue)
-            // {
-            //     item.Properties.DurabilityBurnModificator = 1;
-            //     modifiedDurabilityCount++;
-            // }
-            //
-            // // Remove Durability Burn Ratio for all weapons
-            // if (item.Properties.DurabilityBurnRatio.HasValue)
-            // {
-            //     item.Properties.DurabilityBurnRatio = 1;
-            //     modifiedDurabilityCount++;
-            // }
+            if (item.Properties.DurabilityBurnRatio is > 1)
+            {
+                item.Properties.DurabilityBurnRatio = 1f;
+                durabilityModified = true;
+            }
+
+            if (durabilityModified)
+            {
+                modifiedDurabilityCount++;
+            }
             
             // allow army bandage to heal heavy bleeds
             if (item.Id == "5751a25924597722c463c472")
@@ -332,54 +359,39 @@ public class EditDatabaseValues(
                     };
                 }
             }
-
-            // Remove durability burn for suppressors & ammo
-            if (item.Parent == SilencerParentId || item.Parent == AmmoParentId)
-            {
-                item.Properties.DurabilityBurnModificator = 1f;
-                modifiedDurabilityCount++;
-            }
             
-            // halve ergo penalty for suppressors
-            if (item.Parent == SilencerParentId)
+            // halve ergo penalty for scopes/sights over -3 ergo
+            if (item.Parent == AssaultScopeParentId || item.Parent == ReflexSightParentId ||
+                item.Parent == CompactReflexSightParentId || item.Parent == ScopeSightParentId || 
+                item.Parent == SpecialSightParentId)
             {
-                item.Properties.Ergonomics = Math.Floor(item.Properties.Ergonomics.Value / 2.0);
+                if (item.Properties.Ergonomics.HasValue && item.Properties.Ergonomics.Value < -3)
+                {
+                    item.Properties.Ergonomics = Math.Truncate(item.Properties.Ergonomics.Value / 2.0);
+                }
+            }
+
+            // halve ergo penalty for suppressors 
+            if (item.Parent == SilencerParentId && item.Properties.Ergonomics.HasValue)
+            {
+                item.Properties.Ergonomics = Math.Truncate(item.Properties.Ergonomics.Value / 2.0);
             }
             
             // Key & Keycard recoloring logic
             if (_config.EnableKeyColorChanges)
             {
-                bool isKeyByParent = string.Equals(item.Parent, MechanicalKeyParentId, StringComparison.OrdinalIgnoreCase) ||
-                                     string.Equals(item.Parent, KeycardParentId, StringComparison.OrdinalIgnoreCase);
+                bool isKeyByParent = item.Parent == MechanicalKeyParentId || item.Parent == KeycardParentId;
 
-                if (questKeysSet.Contains(item.Id))
+                bool matched =
+                    TrySetColor(item, questKeysSet, "red", ref questKeysCount) ||
+                    TrySetColor(item, markedKeysSet, "yellow", ref markedKeysCount) ||
+                    TrySetColor(item, valuableKeysSet, "violet", ref valuableKeysCount) ||
+                    TrySetColor(item, midKeysSet, "blue", ref midKeysCount) ||
+                    TrySetColor(item, mehhKeysSet, "green", ref mehhKeysCount);
+
+                if (!matched && isKeyByParent)
                 {
-                    item.Properties.BackgroundColor = "red"; // Quest-related keys/keycards
-                    questKeysCount++;
-                }
-                else if (markedKeysSet.Contains(item.Id))
-                {
-                    item.Properties.BackgroundColor = "yellow"; // Extremely High-value keys/keycards
-                    markedKeysCount++;
-                }
-                else if (valuableKeysSet.Contains(item.Id))
-                {
-                    item.Properties.BackgroundColor = "violet"; // High-value keys/keycards
-                    valuableKeysCount++;
-                }
-                else if (midKeysSet.Contains(item.Id))
-                {
-                    item.Properties.BackgroundColor = "blue"; // Medium-value keys/keycards
-                    midKeysCount++;
-                }
-                else if (mehhKeysSet.Contains(item.Id))
-                {
-                    item.Properties.BackgroundColor = "green"; // Low-value keys/keycards
-                    mehhKeysCount++;
-                }
-                else if (isKeyByParent)
-                {
-                    item.Properties.BackgroundColor = "grey"; // All other keys
+                    item.Properties.BackgroundColor = "grey";
                     defaultKeysCount++;
                 }
             }
@@ -400,7 +412,8 @@ public class EditDatabaseValues(
             }
         }
 
-        logger.LogWithColor($"[{ModName}] Removed durability burn modifier from {modifiedDurabilityCount} silencers & ammo items.", ConsoleColor.Green);
+        logger.LogWithColor($"[{ModName}] Removed negative durability burn modifier from {modifiedDurabilityCount} items.", ConsoleColor.Green);
+        
         if (_config.EnableKeyColorChanges)
         {
             int totalKeysCount = markedKeysCount + valuableKeysCount + mehhKeysCount + defaultKeysCount;
@@ -421,7 +434,7 @@ public class EditDatabaseValues(
         var hideoutZones = hideoutTable.Areas;
         var hideoutProds = hideoutTable.Production.Recipes;
 
-        // Modify Hideout Area build times
+        // modify Hideout Area build times
         foreach (var zone in hideoutZones)
         {
             if (zone.Stages == null) continue;
@@ -439,7 +452,7 @@ public class EditDatabaseValues(
             }
         }
 
-        // Modify Hideout Area craft times
+        // modify Hideout Area craft times
         foreach (var production in hideoutProds)
         {
             if (production.Id == "5d5c205bd582a50d042a3c0e")
@@ -451,13 +464,9 @@ public class EditDatabaseValues(
                 production.ProductionTime = Random.Shared.Next(_config.HideoutCraftMinSeconds, _config.HideoutCraftMaxSeconds);
             }
         }
-
-        // logger.Success($"[{ModName}]  Hideout construction stages randomized to be between {_config.HideoutBuildMinSeconds} and {_config.HideoutBuildMaxSeconds} seconds.");
-        // logger.Success($"[{ModName}]  Hideout production timers randomized to be between {_config.HideoutCraftMinSeconds} and {_config.HideoutCraftMaxSeconds} seconds.");
         
         logger.Success($"[{ModName}] Hideout construction stages randomized to be between {_config.HideoutBuildMinSeconds}s and {_config.HideoutBuildMaxSeconds}s ({_config.HideoutBuildMinSeconds / 60.0:0.##} - {_config.HideoutBuildMaxSeconds / 60.0:0.##} minutes).");
-        logger.Success($"[{ModName}] Hideout production timers randomized to be between {_config.HideoutCraftMinSeconds}s and {_config.HideoutCraftMaxSeconds}s ({_config.HideoutCraftMinSeconds / 60.0:0.##} - {_config.HideoutCraftMaxSeconds / 60.0:0.##} minutes).\n");
-
+        logger.Success($"[{ModName}] Hideout production timers randomized to be between {_config.HideoutCraftMinSeconds}s and {_config.HideoutCraftMaxSeconds}s ({_config.HideoutCraftMinSeconds / 60.0:0.##} - {_config.HideoutCraftMaxSeconds / 60.0:0.##} minutes).");
     }
 
     private void EditTraders()
@@ -600,18 +609,5 @@ public class EditDatabaseValues(
             
             Log($" *** DEBUG***  {trader.Name} has a minimum refresh of {trader.Seconds.Min}s and maximum refresh of {trader.Seconds.Max}s. ({trader.Seconds.Min / 60.0:0.##} - {trader.Seconds.Max/ 60.0:0.##} minutes)", ConsoleColor.Yellow);
         }
-        {
-            
-        }
-        
-
-        // traderConfig.updateTime.filter(trader => trader.traderId !== "ragfair").map((trader) => {
-        //     this.logger.logWithColor(`[${this.modName}]: Trader: ${trader?._name}`, LogTextColor.YELLOW); // Log trader name for reference
-        //     this.logger.logWithColor(`[${this.modName}]: Original Min: ${trader.seconds.min} seconds, Original Max: ${trader.seconds.max} seconds`, LogTextColor.GRAY);
-        //     
-        //     trader.seconds.min = Math.floor(Math.random() * (2500 - 1000 + 1)) + 1200;
-        //     trader.seconds.max = trader.seconds.min * 2;
-        //     this.logger.logWithColor(`[${this.modName}]: Updated Min: ${trader.seconds.min} seconds, Updated Max: ${trader.seconds.max} seconds\n`, LogTextColor.WHITE);
-        // });
     }
 }
