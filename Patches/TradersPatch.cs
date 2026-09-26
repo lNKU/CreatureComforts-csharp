@@ -14,6 +14,11 @@ public class TradersPatch(
     {
         "БТР", "caretaker", "Unknown", "Arena", "Storyteller"
     };
+    private static string Capitalize(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return char.ToUpper(value[0]) + value[1..].ToLower();
+    }
     
     public void Apply(ModConfig config)
     {
@@ -35,7 +40,6 @@ public class TradersPatch(
             Dictionary<int, TraderTierSettings> tiers;
             
             // skip trader entirely if there is no tuning entry at all
-            // if (!config.TraderTuning.TryGetValue(traderName, out var tierSettings)) continue;
             if (config.TraderTuning.TryGetValue(traderName, out var vanillaTiers))
             {
                 // Base-game trader: always applied if listed, no toggle
@@ -105,7 +109,7 @@ public class TradersPatch(
 
             if (ignoredTraderTimers.Contains(traderName)) continue;
 
-            ModLog.If(logger, config, ModName, $" *** DEBUG***  {trader.Name} has a minimum refresh of {trader.Seconds.Min}s and maximum refresh of {trader.Seconds.Max}s. ({trader.Seconds.Min / 60.0:0.##} - {trader.Seconds.Max / 60.0:0.##} minutes)", ConsoleColor.Yellow);
+            ModLog.If(logger, config, ModName, $" *** DEBUG***  {Capitalize(trader.Name)} has a minimum refresh of {trader.Seconds.Min}s and maximum refresh of {trader.Seconds.Max}s. ({trader.Seconds.Min / 60.0:0.##} - {trader.Seconds.Max / 60.0:0.##} minutes)", ConsoleColor.Yellow);
         }
     }
 }

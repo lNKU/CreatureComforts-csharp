@@ -85,7 +85,7 @@ public class ModConfig
         {
             [2] = new TraderTierSettings { SalesSumMultiplier = 0.95 },
             [3] = new TraderTierSettings { SalesSumMultiplier = 1.14, LevelReduction = 3 },
-            [4] = new TraderTierSettings { SalesSumMultiplier = 0.9025, StandingFactor = 1.25 }
+            [4] = new TraderTierSettings { SalesSumMultiplier = 0.9025, StandingFactor = .75 }
         },
         ["Peacekeeper"] = new Dictionary<int, TraderTierSettings>
         {
