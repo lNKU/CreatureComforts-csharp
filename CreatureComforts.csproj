@@ -9,6 +9,7 @@
         <Version>0.0.1</Version>
         <!-- The two lines below will set the output path for the binaries -->
         <OutputPath>bin\$(Configuration)\$(ProjectName)\INKU-$(AssemblyName)\</OutputPath>
+        <ImplicitUsings>enable</ImplicitUsings>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
 

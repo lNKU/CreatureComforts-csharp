@@ -1,15 +1,4 @@
-﻿using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using SPTarkov.Common.Models.Logging;
-using SPTarkov.DI.Annotations;
-using SPTarkov.Server.Core.DI;
-using SPTarkov.Server.Core.Models.Eft.Common.Tables;
-using SPTarkov.Server.Core.Models.Enums;
-using SPTarkov.Server.Core.Models.Spt.Config;
-using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Spt.Tables;
-using Path = System.IO.Path;
+﻿using SPTarkov.Server.Core.Models.Spt.Mod;
 
 namespace CreatureComforts;
 
@@ -19,7 +8,7 @@ public record ModMetadata : IModMetadata
     public string Name { get; init; } = "CreatureComforts";
     public string Author { get; init; } = "INKU";
     public List<string>? Contributors { get; init; }
-    public SemanticVersioning.Version Version { get; init; } = new("1.3.0");
+    public SemanticVersioning.Version Version { get; init; } = new("2.0.0");
     public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.0");
     public List<string>? Incompatibilities { get; init; }
     public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
@@ -28,586 +17,53 @@ public record ModMetadata : IModMetadata
     public bool HasPrepatcher { get; init; } = false;
 }
 
-public class ModConfig
-{
-    public bool EnableLogging { get; set; } = true;
-    public bool RefreshConfig { get; set; } = false;
-    public bool EnableKeyColorChanges { get; set; } = true;
-    public int FleaMarketMinLevel { get; set; } = 25;
-    public int ScavCooldownMinSeconds { get; set; } = 300;
-    public int ScavCooldownMaxSeconds { get; set; } = 900;
-    public int HideoutBuildMinSeconds { get; set; } = 300;
-    public int HideoutBuildMaxSeconds { get; set; } = 900;
-    public int HideoutCraftMinSeconds { get; set; } = 15;
-    public int HideoutCraftMaxSeconds { get; set; } = 120;
-    public int MetalFuelTankResource { get; set; } = 220;
-    public int ExpeditionaryFuelTankResource { get; set; } = 100;
-    public List<string> QuestKeys { get; set; } =
-    [
-        ""
-    ];
-    public List<string> MarkedKeys { get; set; } =
-    [
-        "5780cf7f2459777de4559322", "5d80c62a86f7744036212b3f", "5d80c60f86f77440373c4ece", "62987dfc402c7f69bf010923",
-        "64ccc25f95763a1ae376e447", "63a3a93f8a56922e82001f5d", "64d4b23dc1b37504b41ac2b6", "5c1d0f4986f7744bb01837fa", 
-        "5c1d0efb86f7744baf2e7b7b", "5c1d0c5f86f7744bb2683cf0", "5c1d0dc586f7744baf2e7b79", "5c1e495a86f7743109743dfb", 
-        "5c1d0d6d86f7744bb2683e1f", "5c94bbff86f7747ee735c08f"
-    ];
-    public List<string> ValuableKeys { get; set; } =
-    [
-        "5448ba0b4bdc2d02308b456c", "5780d0532459777a5108b9a2", "5780d0652459777df90dcb74", "591382d986f774465a6413a7", 
-        "59136e1e86f774432f15d133", "59387a4986f77401cc236e62", "5672c92d4bdc2d180f8b4567", "59148c8a86f774197930e983", 
-        "5780cf942459777df90dcb72", "5ad5d64486f774079b080af8", "5e42c71586f7747f245e1343", "5ad5db3786f7743568421cce",
-        "5ad5d7d286f77450166e0a89", "5addaffe86f77470b455f900", "5e42c81886f7742a01529f57", "5e42c83786f7742a021fdf3c", 
-        "5c1e2a1e86f77431ea0ea84c", "5c1e2d1f86f77431e9280bee", "5c1f79a086f7746ed066fb8f", "5d947d3886f774447b415893", 
-        "5d8e0e0e86f774321140eb56", "5d80c6c586f77440351beef1", "5d80ccac86f77470841ff452", "5d80ccdd86f77474f7575e02", 
-        "5d80cd1a86f77402aa362f42", "5d80c66d86f774405611c7d6", "5d80c6fc86f774403a401e3c", "5d80c88d86f77440556dbf07", 
-        "61aa5b7db225ac1ead7957c1", "61aa5ba8018e9821b7368da9", "61aa5b518f5e7a39b41416e2", "61a6444b8c141d68246e2d2f", 
-        "62987da96188c076bc0d8c51", "62987c658081af308d7558c6", "5a0f08bc86f77478f33b84c2", "5d8e15b686f774445103b190", 
-        "5a0eb6ac86f7743124037a28", "5a0f068686f7745b0d4ea242", "5a0f0f5886f7741c4e32a472", "5a0dc45586f7742f6b0b73e3", 
-        "5a0dc95c86f77452440fc675", "5a144dfd86f77445cb5a0982", "5a0ee30786f774023b6ee08f", "5a0ee34586f774023b6ee092", 
-        "5a13eebd86f7746fd639aa93", "5a0ee37f86f774023657a86f", "5a1452ee86f7746f33111763", "5a13ef7e86f7741290491063", 
-        "5a13f46386f7741dd7384b04", "5a0eff2986f7741fd654e684", "5a0ea64786f7741707720468", "5eff09cd30a7dc22fd1ddfed", 
-        "5a0ee4b586f7743698200d22", "5a13f24186f77410e57c5626", "5a13f35286f77413ef1436b0", "5a145d4786f7744cbb6f4a12", 
-        "5a145d7b86f7744cbb6f4a13", "5a0eec9686f77402ac5c39f2", "5a0eee1486f77402aa773226", "5a0ea79b86f7741d4a35298e", 
-        "63a39c7964283b5e9c56b280", "64ccc1ec1779ad6ba200a137", "63a71e781031ac76fe773c7d", "64ccc1d4a0f13c24561edf27", 
-        "64ccc1f4ff54fb38131acf27", "63a71e922b25f7513905ca20", "63a71e86b7f4570d3a293169", "63a39fc0af870e651d58e6ae", 
-        "63a39f6e64283b5e9c56b289", "63a39667c9b3aa4b61683e98", "63a71ed21031ac76fe773c7f", "6582dbe43a2e5248357dbe9a", 
-        "6582dc4b6ba9e979af6b79f4", "63a399193901f439517cafb6", "63a397d3af870e651d58e65b", "64ccc2111779ad6ba200a139", 
-        "591afe0186f77431bd616a11", "6761a6ccd9bbb27ad703c48a", "68e95f4fa4a577e907015787", "5a0ec6d286f7742c0b518fb5", 
-        "64ccc24de61ea448b507d34d", "64ccc206793ca11c8f450a38", "63a39f08cd6db0635c197600", "6582dbf0b8d7830efc45016f",
-        "6582dc5740562727a654ebb1"
-    ];
-    public List<string> MidKeys { get; set; } =
-    [
-        "5913877a86f774432f15d444", "5780cfa52459777dfb276eb1", "5d947d4e86f774447b415895", "5d80cb3886f77440556dbf09",
-        "5d95d6fa86f77424484aa5e9", "5d80cb5686f77440545d1286", "5d95d6be86f77424444eb3a7", "64ccc246ff54fb38131acf29",
-        "64ccc1fe088064307e14a6f7", "59136a4486f774447a1ed172"
-    ];
-    public List<string> MehhKeys { get; set; } =
-    [
-        "658199972dc4e60f6d556a2f", "6581998038c79576a2569e11", "5d08d21286f774736e7c94c3", "5da743f586f7744014504f72", 
-        "5913611c86f77479e0084092", "591383f186f7744a4c5edcf3", "5ad5cfbd86f7742c825d6104", "63a39fd1c9b3aa4b61683efb"
-    ];
-}
-
-[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
-public class EditDatabaseValues(
-    ISptLogger<EditDatabaseValues> logger,
-    GlobalTable globalTable,
-    TemplateTable templateTable,
-    TradersTable tradersTable,
-    TraderConfig traderConfig,
-    HideoutTable hideoutTable)
-    : IOnLoad
+[Injectable(TypePriority = OnLoadOrder.PostLoad)]
+public class CreatureComfortsLoader(
+    ISptLogger<CreatureComfortsLoader> logger,
+    ModConfigLoader configLoader,
+    GlobalsPatch globalsPatch,
+    ItemsPatch itemsPatch,
+    HideoutPatch hideoutPatch,
+    TradersPatch tradersPatch) : IOnLoad
 {
     private const string ModName = "CreatureComforts";
-    private const string FuelParentId = "5d650c3e815116009f6201d2";
-    private const string MechanicalKeyParentId = "5c99f98d86f7745c314214b3";
-    private const string SilencerParentId = "550aa4cd4bdc2dd8348b456c";
-    private const string KeycardParentId = "5c164d2286f774194c5e69fa";
-    private const string AssaultScopeParentId = "55818add4bdc2d5b648b456f";
-    private const string ReflexSightParentId = "55818ad54bdc2ddc698b4569";
-    private const string CompactReflexSightParentId = "55818acf4bdc2dde698b456b";
-    private const string ScopeSightParentId = "55818ae44bdc2dde698b456c";
-    private const string SpecialSightParentId = "55818aeb4bdc2ddc698b456a";
-    private static bool TrySetColor(TemplateItem item, HashSet<string> set, string color, ref int counter)
-    {
-        if (!set.Contains(item.Id)) return false;
-        item.Properties!.BackgroundColor = color;
-        counter++;
-        return true;
-    }
+
     private static readonly string[] FlavorText =
     [
         "Your gear is now legally obligated to last more than one raid.",
         "Did you forget to reticulate your splines again?",
+        "Currents, Loathe, and Bad Omens are also acceptable raid playlist material.",
         "Your Discord messages are shameful, you heathen.",
+        "Moodring are the GOAT for modern Nu-Metal.",
         "Scav cooldown shortened. Your alt is welcome.",
+        "What bosses would like As I Lay Dying? I think Birdeye would.",
+        "Rimworld colonists have better morale management than the average PMC.",
+        "Tesseract's polyrhythms confuse me more than the flea market's search filters.",
         "Keys now color-coded for people who can't read tooltips.",
         "Say hi on Discord! I like talking to new people, sometimes.",
         "I'm still not maxxed in Old School RuneScape. Shameful, right?",
+        "Periphery and Volumes... because djent enjoyers deserve representation too.",
         "Your stock now folds as easily as your confidence.",
         "You like good music? throatcut, Ocean Grove, and Northlane. You're welcome.",
         "Trader loyalty made slightly less soul-crushing.",
         "Weapons no longer refuse to fold out of spite.",
+        "I brake for emo girls. You should too.",
         "Spiritbox, amirite?"
     ];
 
-    private ModConfig _config = new();
-    
     public Task OnLoadAsync(CancellationToken cancellationToken)
     {
-        LoadConfig();
+        configLoader.LoadConfig();
+        var config = configLoader.Config;
 
-        EditGlobals();
-        EditItems();
-        EditHideout();
-        EditTraders();
-        EditTraderTimers();
-    
+        globalsPatch.Apply(config);
+        itemsPatch.Apply(config);
+        hideoutPatch.Apply(config);
+        tradersPatch.Apply(config);
+
         string flavor = FlavorText[Random.Shared.Next(FlavorText.Length)];
         logger.Success($"{ModName} loaded! {flavor}");
+
         return Task.CompletedTask;
-    }
-
-    private void LoadConfig()
-    {
-        string modFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-        string configDir = Path.Combine(modFolder, "config");
-        string configPath = Path.Combine(configDir, "config.json");
-        
-        Directory.CreateDirectory(configDir);
-        var serializeOptions = new JsonSerializerOptions { WriteIndented = true };
-        
-        string[] pathSegments = configPath.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
-        string displayPath = pathSegments.Length >= 4 
-            ? $"./{string.Join('/', pathSegments.TakeLast(4))}" 
-            : configPath;
-
-        if (!File.Exists(configPath))
-        {
-            _config = new ModConfig();
-            string defaultJson = JsonSerializer.Serialize(_config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(configPath, defaultJson);
-            logger.Warning($"[{ModName}] Created default config in {displayPath}.");
-            return;
-        }
-
-        try
-        {
-            string existingJson = File.ReadAllText(configPath);
-            _config = JsonSerializer.Deserialize<ModConfig>(existingJson) ?? new ModConfig();
-            
-            
-            // compare the existing config file and the current defined _config
-            var existingConfigNode = JsonNode.Parse(existingJson)?.AsObject();
-            var updatedConfigNode = JsonSerializer.SerializeToNode(_config)?.AsObject();
-            
-            if (existingConfigNode != null && updatedConfigNode != null)
-            {
-                // compare the updated ModConfig and identify keys that don't exist in current config file
-                List<string> addedKeys = updatedConfigNode
-                    .Where(kvp => !existingConfigNode.Any(e => string.Equals(e.Key, kvp.Key, StringComparison.OrdinalIgnoreCase)))
-                    .Select(kvp => kvp.Key)
-                    .ToList();
-
-                if (addedKeys.Count > 0)
-                {
-                    // update the config file
-                    string updatedJson = JsonSerializer.Serialize(_config, serializeOptions);
-                    File.WriteAllText(configPath, updatedJson);
-
-                    // list newly added keys
-                    string keyList = string.Join(", ", addedKeys);
-                    logger.Warning($"[{ModName}] Config updated with new properties: {keyList}");
-                }
-                else
-                {
-                    logger.Success($"[{ModName}] Successfully loaded config.");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.Error($"[{ModName}] Failed to read config file.\n[{ModName}] !!!NON-FATAL ERROR!!!: {ex.Message}");
-            logger.Warning($"[{ModName}] Using default settings for this session.\n");
-            
-            _config = new ModConfig();
-
-            if (_config.RefreshConfig)
-            {
-                logger.Warning($"[{ModName}] Recreating config file at {displayPath}.\n");
-                
-                string defaultJson = JsonSerializer.Serialize(_config, serializeOptions);
-                File.WriteAllText(configPath, defaultJson);
-            }
-        }
-    }
-    
-    private void Log(string message, ConsoleColor color = ConsoleColor.Gray)
-    {
-        if (_config.EnableLogging)
-        {
-            logger.LogWithColor($"[{ModName}] {message}", color);
-        }
-    }
-
-    private void EditGlobals()
-    {
-        var globals = globalTable.Configuration;
-        var globalsXP = globals.Exp.Level.ExperienceTable;
-        var globalsStamina = globals.Stamina;
-        var ragfair = globals.RagFair;
-
-        globals.SavagePlayCooldown = Random.Shared.Next(_config.ScavCooldownMinSeconds, _config.ScavCooldownMaxSeconds);
-        ragfair.MinUserLevel = _config.FleaMarketMinLevel;
-
-        // scale experience required for new levels
-        long totalExp = 0;
-        
-        for (int i = 0; i < globalsXP.Length; i++)
-        {
-            var expLvl = globalsXP[i];
-            var reqExp = expLvl.Experience;
-            int level = i + 1;
-
-            double multiplier = level switch
-            {
-                <= 10 => 1.45, // if below level 10, increase exp per level by 45%
-                <= 70 => 1.55, // if between levels 10 and 70, increase exp per level by 55%
-                71 => 1.35, // if over level 70, increase exp per level by 35%
-                _ => 1.25
-            };
-
-            expLvl.Experience = (int)Math.Ceiling(reqExp * multiplier);
-            totalExp += expLvl.Experience;
-            Log($"\n *** DEBUG***  Lv.{level} - Base Required EXP: {reqExp:N0}", ConsoleColor.Cyan);
-            Log($" *** DEBUG***  Lv.{level} - Modified Required EXP: {expLvl.Experience:N0}", ConsoleColor.Yellow);
-            Log($" *** DEBUG***  Lv.{level} - Total Required EXP: {totalExp:N0}\n", ConsoleColor.Yellow);
-        }
-
-        // Halve Energy and Hydration drain
-        globals.Health.Effects.Existence.HydrationDamage /= 2f;
-        globals.Health.Effects.Existence.EnergyDamage /= 2f;
-        
-        // Increase weight limits slightly
-        globalsStamina.BaseOverweightLimits = globalsStamina.BaseOverweightLimits with
-        {
-            X = globalsStamina.BaseOverweightLimits.X * 1.55f,
-            Y = globalsStamina.BaseOverweightLimits.Y * 1.175f
-        };
-
-        globalsStamina.SprintOverweightLimits = globalsStamina.SprintOverweightLimits with
-        {
-            X = globalsStamina.SprintOverweightLimits.X * 1.725f,
-            Y = globalsStamina.SprintOverweightLimits.Y * 1.175f
-        };
-
-        globalsStamina.WalkOverweightLimits = globalsStamina.WalkOverweightLimits with
-        {
-            X = globalsStamina.WalkOverweightLimits.X * 1.55f,
-            Y = globalsStamina.WalkOverweightLimits.Y * 1.35f
-        };
-
-        globalsStamina.WalkSpeedOverweightLimits = globalsStamina.WalkSpeedOverweightLimits with
-        {
-            X = globalsStamina.WalkSpeedOverweightLimits.X * 1.55f,
-            Y = globalsStamina.WalkSpeedOverweightLimits.Y * 1.2f
-        };
-
-        Log($" *** DEBUG***  BaseOverweightLimits -> {globalsStamina.BaseOverweightLimits.X}kg / {globalsStamina.BaseOverweightLimits.Y}kg", ConsoleColor.Cyan);
-        Log($" *** DEBUG***  SprintOverweightLimits -> {globalsStamina.SprintOverweightLimits.X}kg / {globalsStamina.SprintOverweightLimits.Y}kg\n", ConsoleColor.Yellow);
-    }
-
-    private void EditItems()
-    {
-        var items = templateTable.Items;
-        int modifiedDurabilityCount = 0;
-        int markedKeysCount = 0;
-        int valuableKeysCount = 0;
-        int midKeysCount = 0;
-        int mehhKeysCount = 0;
-        int questKeysCount = 0;
-        int defaultKeysCount = 0;
-        
-        var questKeysSet = new HashSet<string>(_config.QuestKeys ?? []);
-        var mehhKeysSet = new HashSet<string>(_config.MehhKeys ?? []);
-        var midKeysSet = new HashSet<string>(_config.MidKeys ?? []);
-        var valuableKeysSet = new HashSet<string>(_config.ValuableKeys ?? []);
-        var markedKeysSet = new HashSet<string>(_config.MarkedKeys ?? []);
-		
-        foreach (var item in items.Values)
-        {
-            bool durabilityModified = false;
-            
-            // Remove folding blocks for weapons
-            if (item.Properties == null) continue;
-            
-            item.Properties.BlocksFolding = false;
-
-            // remove any durability burn effect that makes durability drain FASTER (values > 1);
-            // leave anything that slows drain (values < 1) untouched
-            if (item.Properties.DurabilityBurnModificator is > 1)
-            {
-                item.Properties.DurabilityBurnModificator = 1f;
-                durabilityModified = true;
-            }
-
-            if (item.Properties.DurabilityBurnRatio is > 1)
-            {
-                item.Properties.DurabilityBurnRatio = 1f;
-                durabilityModified = true;
-            }
-
-            if (durabilityModified)
-            {
-                modifiedDurabilityCount++;
-            }
-            
-            // allow army bandage to heal heavy bleeds
-            if (item.Id == "5751a25924597722c463c472")
-            {
-                if (item.Properties.EffectsDamage != null)
-                {
-                    item.Properties.EffectsDamage[DamageEffectType.HeavyBleeding] = new EffectsDamageProperties
-                    {
-                        Cost = 2,
-                        Delay = 0,
-                        Duration = 0,
-                        FadeOut = 0
-                    };
-                }
-            }
-            
-            // halve ergo penalty for scopes/sights over -3 ergo
-            if (item.Parent == AssaultScopeParentId || item.Parent == ReflexSightParentId ||
-                item.Parent == CompactReflexSightParentId || item.Parent == ScopeSightParentId || 
-                item.Parent == SpecialSightParentId)
-            {
-                if (item.Properties.Ergonomics.HasValue && item.Properties.Ergonomics.Value < -3)
-                {
-                    item.Properties.Ergonomics = Math.Truncate(item.Properties.Ergonomics.Value / 2.0);
-                }
-            }
-
-            // halve ergo penalty for suppressors 
-            if (item.Parent == SilencerParentId && item.Properties.Ergonomics.HasValue)
-            {
-                item.Properties.Ergonomics = Math.Truncate(item.Properties.Ergonomics.Value / 2.0);
-            }
-            
-            // Key & Keycard recoloring logic
-            if (_config.EnableKeyColorChanges)
-            {
-                bool isKeyByParent = item.Parent == MechanicalKeyParentId || item.Parent == KeycardParentId;
-
-                bool matched =
-                    TrySetColor(item, questKeysSet, "red", ref questKeysCount) ||
-                    TrySetColor(item, markedKeysSet, "yellow", ref markedKeysCount) ||
-                    TrySetColor(item, valuableKeysSet, "violet", ref valuableKeysCount) ||
-                    TrySetColor(item, midKeysSet, "blue", ref midKeysCount) ||
-                    TrySetColor(item, mehhKeysSet, "green", ref mehhKeysCount);
-
-                if (!matched && isKeyByParent)
-                {
-                    item.Properties.BackgroundColor = "grey";
-                    defaultKeysCount++;
-                }
-            }
-
-            // Adjust fuel resource values
-            if (item.Parent == FuelParentId)
-            {
-                if (item.Id == "5d1b36a186f7742523398433") // Metal Fuel Tank
-                {
-                    item.Properties.Resource = _config.MetalFuelTankResource;
-                    item.Properties.MaxResource = _config.MetalFuelTankResource;
-                }
-                else if (item.Id == "5d1b371186f774253763a656") // Expeditionary Fuel Tank
-                {
-                    item.Properties.Resource = _config.ExpeditionaryFuelTankResource;
-                    item.Properties.MaxResource = _config.ExpeditionaryFuelTankResource;
-                }
-            }
-        }
-
-        logger.LogWithColor($"[{ModName}] Removed negative durability burn modifier from {modifiedDurabilityCount} items.", ConsoleColor.Green);
-        
-        if (_config.EnableKeyColorChanges)
-        {
-            int totalKeysCount = markedKeysCount + valuableKeysCount + mehhKeysCount + defaultKeysCount;
-            
-            Log(" *** DEBUG***  Key Color Breakdown:", ConsoleColor.Cyan);
-            Log($" *** DEBUG***  - Quest (Red): {questKeysCount}", ConsoleColor.DarkRed);
-            Log($" *** DEBUG***  - Marked (Yellow): {markedKeysCount}", ConsoleColor.Yellow);
-            Log($" *** DEBUG***  - Valuable (Violet): {valuableKeysCount}", ConsoleColor.Magenta);
-            Log($" *** DEBUG***  - Mid Value (Blue): {midKeysCount}", ConsoleColor.Blue);
-            Log($" *** DEBUG***  - Low Value (Green): {mehhKeysCount}", ConsoleColor.Green);
-            Log($" *** DEBUG***  - Useless (Grey): {defaultKeysCount}\n", ConsoleColor.White);
-            logger.LogWithColor($"[{ModName}] Updated background colors for {totalKeysCount} keys and keycards.", ConsoleColor.Green);
-        }
-    }
-    
-    private void EditHideout()
-    {
-        var hideoutZones = hideoutTable.Areas;
-        var hideoutProds = hideoutTable.Production.Recipes;
-
-        // modify Hideout Area build times
-        foreach (var zone in hideoutZones)
-        {
-            if (zone.Stages == null) continue;
-
-            foreach (var (key, stage) in zone.Stages)
-            {
-                if (int.TryParse(key, out int level) && level <= 1)
-                {
-                    stage.ConstructionTime = 0;
-                }
-                else
-                {
-                    stage.ConstructionTime = Random.Shared.Next(_config.HideoutBuildMinSeconds, _config.HideoutBuildMaxSeconds);
-                }
-            }
-        }
-
-        // modify Hideout Area craft times
-        foreach (var production in hideoutProds)
-        {
-            if (production.Id == "5d5c205bd582a50d042a3c0e")
-            {
-                production.ProductionTime = 12600; // Bitcoin set to 3.5hrs
-            }
-            else
-            {
-                production.ProductionTime = Random.Shared.Next(_config.HideoutCraftMinSeconds, _config.HideoutCraftMaxSeconds);
-            }
-        }
-        
-        logger.Success($"[{ModName}] Hideout construction stages randomized to be between {_config.HideoutBuildMinSeconds}s and {_config.HideoutBuildMaxSeconds}s ({_config.HideoutBuildMinSeconds / 60.0:0.##} - {_config.HideoutBuildMaxSeconds / 60.0:0.##} minutes).");
-        logger.Success($"[{ModName}] Hideout production timers randomized to be between {_config.HideoutCraftMinSeconds}s and {_config.HideoutCraftMaxSeconds}s ({_config.HideoutCraftMinSeconds / 60.0:0.##} - {_config.HideoutCraftMaxSeconds / 60.0:0.##} minutes).");
-    }
-
-    private void EditTraders()
-    {
-        var traders = tradersTable;
-        var ignoredTraders = new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
-        { 
-            "БТР", "caretaker", "Unknown", "Scorpion", "Arena", "Storyteller"
-        };
-        
-        foreach (var (traderId, trader) in traders)
-        {
-            var traderBase = trader.Base;
-            if (traderBase?.LoyaltyLevels == null) continue;
-            
-            string traderName = traderBase.Nickname ?? traderId;
-            
-            if (ignoredTraders.Contains(traderName)) continue;
-            
-            Log($" *** DEBUG***  {traderName}({traderId})", ConsoleColor.Cyan);
-            
-            var loyaltyLevels = traderBase.LoyaltyLevels;
-
-            for (int i = 0; i < loyaltyLevels.Count; i++)
-            {
-                var level = loyaltyLevels[i];
-                int levelNum = i + 1;
-
-                switch (traderName)
-                {
-                    case "Prapor":
-                        level.MinStanding /= 2;
-                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
-                        break;
-
-                    case "Therapist":
-                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 2.85);
-                        if (levelNum == 3)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 3.05);
-                        }
-                        else if (levelNum == 4)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 3.35);
-                        }
-
-                        break;
-
-                    case "Fence":
-                        if (levelNum == 2)
-                        {
-                            level.MinStanding /= 3;
-                        }
-
-                        break;
-
-                    case "Skier":
-                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 0.95);
-                        if (levelNum == 3)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
-                        }
-                        else if (levelNum == 4)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 0.95);
-                            level.MinStanding /= 1.25;
-                        }
-
-                        break;
-
-                    case "Peacekeeper":
-                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 0.73);
-                        if (levelNum == 3)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.22);
-                        }
-                        else if (levelNum == 4)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.3);
-                            level.MinStanding /= 1.2;
-                        }
-
-                        break;
-
-                    case "Mechanic":
-                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.12);
-                        if (levelNum == 3)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
-                        }
-                        else if (levelNum == 4)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.18);
-                            level.MinStanding /= 1.2;
-                        }
-
-                        break;
-
-                    case "Ragman":
-                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.1);
-                        if (levelNum == 3)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.2);
-                        }
-                        else if (levelNum == 4)
-                        {
-                            level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 1.3);
-                        }
-
-                        break;
-
-                    case "Jaeger":
-                        level.MinStanding = 0;
-                        level.MinSalesSum = (long)Math.Round((level.MinSalesSum ?? 0) * 2.0);
-                        break;
-                }
-
-                Log($" *** DEBUG***  {traderName} - Lv{levelNum}. minStanding is now {level.MinStanding:F2}", ConsoleColor.Yellow);
-                Log($" *** DEBUG***  {traderName} - Lv{levelNum}. minSalesSum is now {level.MinSalesSum:N0}\n", ConsoleColor.Cyan);
-            }
-        }
-    }
-
-    private void EditTraderTimers()
-    {
-        var tradersTimers = traderConfig.UpdateTime;
-        var ignoredTraderTimers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
-        { 
-            "btr", "x", ""
-        };
-        if (tradersTimers == null) return;
-        
-        // Random.Shared.Next();
-
-        foreach (var trader in tradersTimers)
-        {
-            string traderName = trader.Name;
-        
-            if (ignoredTraderTimers.Contains(traderName)) continue;
-            
-            Log($" *** DEBUG***  {trader.Name} has a minimum refresh of {trader.Seconds.Min}s and maximum refresh of {trader.Seconds.Max}s. ({trader.Seconds.Min / 60.0:0.##} - {trader.Seconds.Max/ 60.0:0.##} minutes)", ConsoleColor.Yellow);
-        }
     }
 }
